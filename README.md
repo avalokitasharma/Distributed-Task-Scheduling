@@ -39,7 +39,9 @@ Distributed job scheduling platform supports both one-time and recurring cron jo
 7. **DAG Orchestration Service**:
    - Manages jobs with dependencies and ensures DAG execution order.
 
-**Incoming features**
+
+## Upcoming features:
+
 8. **Monitoring Service**:
    - Exposes metrics via Prometheus for system health and performance.
    - Dashboards are available in Grafana for real-time insights.
@@ -89,7 +91,7 @@ Distributed job scheduling platform supports both one-time and recurring cron jo
 ### Steps:
 1. Clone the repository:
    ```bash
-   git clone https://github.com/avalokitasharma/distributed-job-scheduling.git
+   git clone https://github.com/avalokitasharma/Distributed-Task-Scheduling.git
    cd distributed-job-scheduling
    ```
 2. Build and run individual services:
