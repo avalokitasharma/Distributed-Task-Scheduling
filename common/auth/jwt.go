@@ -37,8 +37,12 @@ func ValidateJWT(secret, tokenStr string) (*Claims, error) {
 	}
 
 	claims, ok := token.Claims.(*Claims)
-	if !ok || !token.Valid {
-		return nil, err
+	if !ok {
+		return nil, jwt.ErrTokenInvalidClaims
+	}
+
+	if !token.Valid {
+		return nil, jwt.ErrTokenInvalidId
 	}
 
 	return claims, nil
