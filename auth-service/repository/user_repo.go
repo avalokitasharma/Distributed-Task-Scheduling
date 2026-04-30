@@ -27,6 +27,16 @@ func (r *UserRepo) Create(user *User) error {
 	return err
 }
 
-func (r *UserRepo) GetByMail() {
+func (r *UserRepo) GetByMail(email string) (*User, error) {
+	u := &User{}
+	row := r.db.QueryRow(`
+		SELECT id, email, password, tenant_id, role
+		FROM users WHERE email=$1
+	`, email)
 
+	err := row.Scan(&u.ID, &u.Email, &u.Password, &u.TenantID, &u.Role)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
 }
