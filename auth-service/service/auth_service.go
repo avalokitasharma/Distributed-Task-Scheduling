@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/avalokitasharma/job-scheduler/auth-service/repository"
 	"github.com/avalokitasharma/job-scheduler/common/auth"
 	"github.com/google/uuid"
@@ -51,4 +53,33 @@ func (s *AuthService) RegisterTenant(email, password, tenantName string) (string
 	}
 
 	return auth.GenerateJWT(s.secret, user.ID, tenant.ID, user.Role)
+}
+
+func (s *AuthService) RegisterUser(email, password, tenantID, role string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	user := &repository.User{
+		ID:       uuid.NewString(),
+		Email:    email,
+		Password: string(hash),
+		TenantID: tenantID,
+		Role:     role,
+	}
+
+	return s.userRepo.Create(user)
+}
+
+func (s *AuthService) Login(email, password string) (string, error) {
+	user, err := s.userRepo.GetByMail(email)
+	if err != nil {
+		return "", errors.New("invalid credentials")
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return "", errors.New("invalid credentials")
+	}
+	return auth.GenerateJWT(s.secret, user.ID, user.TenantID, user.Role)
 }
