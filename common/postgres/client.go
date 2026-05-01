@@ -11,7 +11,7 @@ import (
 var counts int
 var maxRetries int = 5
 
-func connectToDB(dsn string) *sql.DB {
+func ConnectToDB(dsn string) *sql.DB {
 	for {
 		connection, err := openDB(dsn)
 		if err != nil {
