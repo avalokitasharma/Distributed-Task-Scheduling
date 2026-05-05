@@ -109,6 +109,19 @@ func (s *TenantConfigService) CanRunJob(ctx context.Context, tenantId string) er
 	return nil
 }
 
+// Counter Maintenance
+// increase count on job run
+func (s *TenantConfigService) IncrementRunning(ctx context.Context, tenantId string) {
+	key := "tenant:" + tenantId + ":jobs:running"
+	s.redis.Incr(ctx, key)
+}
+
+// decrease on job completion
+func (s *TenantConfigService) DecrementRunning(ctx context.Context, tenantID string) {
+	key := "tenant:" + tenantID + ":jobs:running"
+	s.redis.Decr(ctx, key)
+}
+
 // Rate limiting (Token bucket using Redis)
 func (s *TenantConfigService) CheckRateLimit(tenantId string) error {
 	return nil
