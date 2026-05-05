@@ -67,7 +67,7 @@ func (s *TenantConfigService) UpsertConfig(ctx context.Context, tenantId string,
 }
 
 // job creation quota checks
-func (s *TenantConfigService) CanCreateJob(ctx context.Context, tenantId string) (bool, error) {
+func (s *TenantConfigService) CanCreateJob(ctx context.Context, tenantId string) error {
 	cfg, err := s.GetConfig(ctx, tenantId)
 
 	key := "tenant:" + tenantId + ":jobs:count"
@@ -77,18 +77,36 @@ func (s *TenantConfigService) CanCreateJob(ctx context.Context, tenantId string)
 	if err != nil {
 		count, err = s.repo.CountJobs(tenantId)
 		if err != nil {
-			return false, err
+			return err
 		}
 	}
 	if count >= cfg.MaxJobs {
-		return false, errors.New("job quota exceeded")
+		return errors.New("job quota exceeded")
 	}
-	return true, nil
+	return nil
 }
 
-// Concurrent execution quota
-func (s *TenantConfigService) CanRunJob(tenantId string) (bool, error) {
-	return true, nil
+// Concurrent execution quota - critical path
+func (s *TenantConfigService) CanRunJob(ctx context.Context, tenantId string) error {
+	cfg, err := s.GetConfig(ctx, tenantId)
+	if err != nil {
+		return err
+	}
+	key := "tenant:" + tenantId + ":jobs:running"
+
+	running, err := s.redis.Get(ctx, key).Int()
+	// fallback to DB
+	if err != nil {
+
+		running, err = s.repo.CountRunningJobs(tenantId)
+		if err != nil {
+			return err
+		}
+	}
+	if running >= cfg.MaxConcurrentJobs {
+		return errors.New("concurrent execution limit reached")
+	}
+	return nil
 }
 
 // Rate limiting (Token bucket using Redis)
