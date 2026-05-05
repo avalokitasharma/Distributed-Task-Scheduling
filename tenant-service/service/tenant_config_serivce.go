@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/avalokitasharma/job-scheduler/tenant-service/repository"
@@ -65,8 +66,23 @@ func (s *TenantConfigService) UpsertConfig(ctx context.Context, tenantId string,
 	return nil
 }
 
-// Quota checks
-func (s *TenantConfigService) CanCreateJob(tenantId string) (bool, error) {
+// job creation quota checks
+func (s *TenantConfigService) CanCreateJob(ctx context.Context, tenantId string) (bool, error) {
+	cfg, err := s.GetConfig(ctx, tenantId)
+
+	key := "tenant:" + tenantId + ":jobs:count"
+
+	count, err := s.redis.Get(ctx, key).Int()
+	// fallback to DB
+	if err != nil {
+		count, err = s.repo.CountJobs(tenantId)
+		if err != nil {
+			return false, err
+		}
+	}
+	if count >= cfg.MaxJobs {
+		return false, errors.New("job quota exceeded")
+	}
 	return true, nil
 }
 
