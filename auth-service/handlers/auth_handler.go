@@ -16,6 +16,7 @@ func NewAuthHandler(s *service.AuthService) *AuthHandler {
 	return &AuthHandler{svc: s}
 }
 
+// Register tenant route
 type registerTenantReq struct {
 	Email      string `json:"email"`
 	Password   string `json:"password"`
@@ -39,6 +40,7 @@ func (h *AuthHandler) RegisterTenant(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Register user route
 type createUserReq struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -52,7 +54,7 @@ func (h *AuthHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
-	// extract claims from context (set by AuthMiddleware)
+	// extract claims from context - set by AuthMiddleware
 	claims, ok := middleware.GetClaims(r.Context())
 	if !ok {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -64,7 +66,7 @@ func (h *AuthHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// prevent creating admins (depends on your policy)
+	// prevent creating admins
 	if req.Role == "admin" {
 		http.Error(w, "forbidden: cannot create admin user", http.StatusForbidden)
 		return
@@ -78,6 +80,7 @@ func (h *AuthHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// Login route
 type loginReq struct {
 	Email    string `json:"email" `
 	Password string `json:"password"`
