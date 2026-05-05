@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/avalokitasharma/job-scheduler/tenant-service/repository"
@@ -123,6 +124,33 @@ func (s *TenantConfigService) DecrementRunning(ctx context.Context, tenantID str
 }
 
 // Rate limiting (Token bucket using Redis)
-func (s *TenantConfigService) CheckRateLimit(tenantId string) error {
+func (s *TenantConfigService) CheckRateLimit(ctx context.Context, tenantId string) error {
+	cfg, err := s.GetConfig(ctx, tenantId)
+	if err != nil {
+		return err
+	}
+
+	key := "tenant:" + tenantId + ":rate"
+	now := time.Now().Unix()
+
+	// remove old entries
+	s.redis.ZRemRangeByScore(ctx, key, "0", strconv.FormatInt(now-1, 10))
+
+	count, err := s.redis.ZCard(ctx, key).Result()
+	if err != nil {
+		return err
+	}
+
+	if int(count) >= cfg.RateLimitPerSec {
+		return errors.New("rate limit exceeded")
+	}
+
+	s.redis.ZAdd(ctx, key, redis.Z{
+		Score:  float64(now),
+		Member: now,
+	})
+
+	s.redis.Expire(ctx, key, 2*time.Second)
 	return nil
+	// todo: atomic check - current check then incr causes race condition
 }
