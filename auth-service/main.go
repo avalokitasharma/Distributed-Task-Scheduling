@@ -1,6 +1,7 @@
 package authservice
 
 import (
+	"log"
 	"net/http"
 	"os"
 
@@ -29,4 +30,10 @@ func main() {
 	http.HandleFunc("/auth/login", handler.Login)
 	http.Handle("/auth/users", middleware.AuthMiddleware(secret, http.HandlerFunc(handler.CreateUser)))
 
+	log.Println("auth-service running on :8081")
+
+	err := http.ListenAndServe(":8081", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

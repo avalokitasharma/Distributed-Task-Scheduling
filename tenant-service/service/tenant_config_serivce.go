@@ -22,7 +22,7 @@ type TenantConfigService struct {
 // tenant:{id}:jobs:running          -> running jobs
 // tenant:{id}:rate                  -> sorted set (timestamps)
 
-func NewTenantService(r *repository.TenantConfigRepo, rc *redis.Client) *TenantConfigService {
+func NewTenantConfigService(r *repository.TenantConfigRepo, rc *redis.Client) *TenantConfigService {
 	return &TenantConfigService{
 		repo:  r,
 		redis: rc,
